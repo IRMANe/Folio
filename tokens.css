@@ -1,0 +1,193 @@
+/* Reset + globals */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+/* ── Responsive safety net (site-wide) ──────────────────────────────────────
+   Stops any element from forcing horizontal scroll on small screens. overflow-x:
+   clip prevents sideways scroll WITHOUT breaking the sticky headers (unlike
+   hidden/auto, clip does not create a scroll container). Media never exceeds its
+   container, and long unbroken strings (emails, URLs) wrap instead of overflow. */
+html, body { overflow-x: clip; max-width: 100%; }
+img, svg, video, canvas, image-slot, video-slot {
+  max-width: 100%;
+  /* Always let a vertical swipe scroll the page, even when the finger lands on
+     an image (no horizontal carousels here). Also suppress the iOS long-press
+     image callout that can interrupt scrolling. */
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+}
+body { overflow-wrap: break-word; }
+body {
+  font-family: 'Manrope', system-ui, sans-serif;
+  background: #E5DFCF;
+  color: #0F2A1B;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; padding: 0; }
+a { color: inherit; text-decoration: none; }
+img, svg { display: block; max-width: 100%; }
+
+/* Shared accent — overwritten by tweak */
+:root {
+  --accent: #6E8E3A;
+  --accent-soft: #DAEACD;
+  --accent-soft-ink: #355C1E;
+  --accent-strong-ink: #2D4A1A;
+}
+
+/* Light / dark token sets — scoped to each variant root via [data-theme] */
+[data-theme="light"] {
+  --paper: #F2EDE3;
+  --paper-2: #E8E2D3;
+  --ink: #0F2A1B;
+  --ink-2: #1F3A2A;
+  --ink-muted: #4D5E51;
+  --ink-faint: #7A8A7C;
+  --line: rgba(15, 42, 27, 0.12);
+  --line-strong: rgba(15, 42, 27, 0.22);
+  --card: #FFFFFF;
+  --card-2: #FBF7EE;
+
+  /* Status — error */
+  --danger:      #B5371D;
+  --danger-soft: #F7DCD2;
+  --danger-ink:  #6F2010;
+}
+[data-theme="dark"] {
+  --paper: #0E1C14;
+  --paper-2: #152922;
+  --ink: #EFE9DA;
+  --ink-2: #DED7C5;
+  --ink-muted: #9DAFA1;
+  --ink-faint: #6A7A6F;
+  --line: rgba(239, 233, 218, 0.13);
+  --line-strong: rgba(239, 233, 218, 0.24);
+  --card: #182B22;
+  --card-2: #1F3A2C;
+
+  /* Accent "soft" pair — theme-aware in dark mode. Derived from --accent so it
+     still follows accent tweaks. !important overrides the light values that
+     each page sets inline on its root (those are tuned for light mode only).
+     In dark mode the soft chip becomes a dark tint and its ink a light accent,
+     so the same token reads correctly both AS a chip background+text pair AND
+     as standalone foreground text on the page. */
+  --accent-soft: color-mix(in oklab, var(--accent) 24%, var(--paper)) !important;
+  --accent-soft-ink: color-mix(in oklab, var(--accent) 62%, white) !important;
+  --accent-strong-ink: color-mix(in oklab, var(--accent) 74%, white) !important;
+
+  /* Status — error */
+  --danger:      #E08770;
+  --danger-soft: #3A1A12;
+  --danger-ink:  #F7C7B7;
+}
+
+/* Tiny utility for screen-reader hiding */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+/* image-slot overlay covers (project cards, case-study covers) — hide the
+   default empty UI and dashed ring so the underlying stylized cover shows
+   through cleanly. Drops still work; uploads happen via the Console. */
+.pj-cover-wrap { position: relative; width: 100%; height: 100%; }
+.pj-cover-wrap image-slot {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+.pj-cover-wrap image-slot::part(empty),
+.pj-cover-wrap image-slot::part(ring) {
+  display: none !important;
+}
+
+/* ── Responsive navigation (shared ResponsiveNav component) ──────────────────
+   Desktop: links shown inline, burger hidden.
+   Tablet & mobile (≤ 900px): links collapse into a burger dropdown panel. */
+.rnav { position: relative; }
+.rnav-burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+}
+.rnav-burger:hover { background: color-mix(in oklab, var(--ink) 7%, transparent); }
+.rnav-panel {
+  position: absolute;
+  top: calc(100% + 16px);
+  right: 0;
+  min-width: 208px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 0 18px 48px -18px rgba(0,0,0,.32), 0 2px 8px -4px rgba(0,0,0,.2);
+  z-index: 40;
+  animation: rnav-pop .16s ease-out;
+}
+.rnav-panel a {
+  padding: 11px 14px;
+  border-radius: 9px;
+  font-size: 15px;
+  transition: background .15s;
+}
+.rnav-panel a:hover { background: color-mix(in oklab, var(--ink) 6%, transparent); }
+@keyframes rnav-pop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 900px) {
+  .rnav-links { display: none !important; }
+  .rnav-burger { display: inline-flex; }
+}
+@media (min-width: 901px) {
+  .rnav-panel { display: none !important; }
+}
+
+/* ── Floating "back to top" button (BackToTopFab) ───────────────────────────
+   Fixed bottom-right, fades/scales in once the reader scrolls down. */
+.fab-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 60;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 28px -10px color-mix(in oklab, var(--accent) 70%, black), 0 2px 6px -3px rgba(0,0,0,.4);
+  opacity: 0;
+  transform: translateY(14px) scale(.85);
+  pointer-events: none;
+  transition: opacity .24s ease, transform .24s ease, background .2s;
+}
+.fab-top.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.fab-top:hover { background: color-mix(in oklab, var(--accent) 88%, black); }
+@media (max-width: 680px) {
+  .fab-top { right: 16px; bottom: 16px; width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fab-top { transition: opacity .2s ease; transform: none; }
+  .fab-top.is-visible { transform: none; }
+}
